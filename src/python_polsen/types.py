@@ -28,17 +28,6 @@ class OverviewMetric(StrEnum):
     SKIN_TEMPERATURE = "SKIN_TEMPERATURE"
 
 
-class TimelineMetric(StrEnum):
-    """Top-level timeline category.
-
-    Distinguishes high-frequency time-series measurements (``TIMESERIES``) from
-    discrete timeline events such as sleep or check-ins (``EVENTS``).
-    """
-
-    TIMESERIES = "TIMESERIES"
-    EVENTS = "EVENTS"
-
-
 class TimeseriesType(StrEnum):
     """Measurement type accepted by ``/v1/timeline/timeseries/{user_id}/{mtype}``.
 

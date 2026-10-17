@@ -11,7 +11,7 @@ from .exceptions import (
     ValidationError,
 )
 from .polsen import PolsenClient
-from .types import FeelingType, OverviewMetric, TimelineMetric, TimeseriesType
+from .types import FeelingType, OverviewMetric, TimeseriesType
 
 __version__ = "0.1.0"
 """Version of the installed ``python-polsen`` distribution."""
@@ -25,7 +25,6 @@ __all__ = [
     "PolsenClient",
     "PolsenError",
     "RateLimitError",
-    "TimelineMetric",
     "TimeseriesType",
     "ValidationError",
     "__version__",

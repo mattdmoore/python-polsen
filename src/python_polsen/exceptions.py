@@ -6,6 +6,8 @@ members (``title``, ``detail``, ``code``, ``request_id``, ...) are attached to
 the exception instance as attributes.
 """
 
+from http import HTTPStatus
+
 
 class PolsenError(Exception):
     """Base class for all Polsen API errors.
@@ -83,3 +85,29 @@ class RateLimitError(PolsenError):
 
 class APIError(PolsenError):
     """Raised for any other non-2xx HTTP response."""
+
+
+_STATUS_TO_ERROR: dict[int, type[PolsenError]] = {
+    HTTPStatus.UNAUTHORIZED: AuthenticationError,
+    HTTPStatus.FORBIDDEN: AuthenticationError,
+    HTTPStatus.NOT_FOUND: NotFoundError,
+    HTTPStatus.UNPROCESSABLE_ENTITY: ValidationError,
+    HTTPStatus.TOO_MANY_REQUESTS: RateLimitError,
+}
+
+
+def error_for_status(
+    status: int,
+    body: dict[str, int | str],
+) -> PolsenError:
+    """Build the :class:`PolsenError` matching an HTTP status code.
+
+    Args:
+        status: HTTP status code returned by the API.
+        body: Decoded ``ProblemDetail`` JSON body.
+
+    Returns:
+        The error subclass mapped to ``status``, or :class:`APIError` when no
+        subclass applies.
+    """
+    return _STATUS_TO_ERROR.get(status, APIError)(body, status_code=status)

@@ -22,13 +22,7 @@ from python_polsen.types import FeelingType, OverviewMetric, TimeseriesType
 
 from .api import v1
 from .const import API_URL
-from .exceptions import (
-    APIError,
-    AuthenticationError,
-    NotFoundError,
-    RateLimitError,
-    ValidationError,
-)
+from .exceptions import RateLimitError, error_for_status
 from .utils import retry_on_rate_limit
 
 
@@ -106,20 +100,13 @@ class PolsenClient:
             if 200 <= response.status < 300:
                 return body or {}
 
-            match response.status:
-                case HTTPStatus.UNAUTHORIZED | HTTPStatus.FORBIDDEN:
-                    raise AuthenticationError(body, status_code=response.status)
-                case HTTPStatus.NOT_FOUND:
-                    raise NotFoundError(body, status_code=response.status)
-                case HTTPStatus.UNPROCESSABLE_ENTITY:
-                    raise ValidationError(body, status_code=response.status)
-                case HTTPStatus.TOO_MANY_REQUESTS:
-                    retry_after = int(response.headers.get("Retry-After", 2))
-                    raise RateLimitError(
-                        body, status_code=response.status, retry_after=retry_after
-                    )
-                case _:
-                    raise APIError(body, status_code=response.status)
+            if response.status == HTTPStatus.TOO_MANY_REQUESTS:
+                retry_after = int(response.headers.get("Retry-After", 2))
+                raise RateLimitError(
+                    body, status_code=response.status, retry_after=retry_after
+                )
+
+            raise error_for_status(response.status, body)
 
     async def _get_session(self) -> ClientSession:
         """Return the shared session, creating one if necessary.

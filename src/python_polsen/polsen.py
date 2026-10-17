@@ -103,8 +103,6 @@ class PolsenClient:
             if 200 <= response.status < 300:
                 return body or {}
 
-            print(url)
-            print(body)
             match response.status:
                 case HTTPStatus.UNAUTHORIZED | HTTPStatus.FORBIDDEN:
                     raise AuthenticationError(body, status_code=response.status)

@@ -92,6 +92,13 @@ class PolsenClient:
                 self._close_session = True
         return self.session
 
+    async def get_user_ids(self) -> list[str]:
+        response = await self._request(self.api.keys())
+        return response.get("user_ids", [])
+
+    async def get_user(self, user_id: str) -> dict[str, str | int]:
+        return await self._request(self.api.user(user_id))
+
     async def close(self) -> None:
         if self.session and self._close_session:
             await self.session.close()

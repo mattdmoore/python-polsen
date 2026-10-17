@@ -1,3 +1,5 @@
+"""Helpers shared by the Polsen API client."""
+
 import asyncio
 import functools
 from collections.abc import Callable, Coroutine
@@ -13,6 +15,7 @@ def retry_on_rate_limit(
 
     @functools.wraps(func)
     async def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
+        """Await ``func``, retrying up to ``self._max_retries`` on rate limits."""
         attempts = 0
         while True:
             try:

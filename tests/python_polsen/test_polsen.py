@@ -124,10 +124,10 @@ async def test_query_parameters_are_forwarded() -> None:
     assert session.requests[0].kwargs["params"] == params
 
 
-async def test_base_url_can_be_overridden() -> None:
+async def test_host_can_be_overridden() -> None:
     session = build_session(FakeResponse(body={}))
 
-    await build_client(session, base_url="example.test").get_user_ids()
+    await build_client(session, host="example.test").get_user_ids()
 
     assert str(session.requests[0].url) == "https://example.test/v1/keys/users"
 

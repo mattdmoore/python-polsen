@@ -9,7 +9,7 @@ from python_polsen.types import TimeseriesType
 
 
 @pytest.mark.parametrize(
-    ("mtype", "segment"),
+    ("timeseries_type", "segment"),
     [
         (TimeseriesType.HEART_RATE, "HEART_RATE"),
         (TimeseriesType.ACTIVITY_COUNT, "ACTIVITY_COUNT"),
@@ -22,9 +22,10 @@ from python_polsen.types import TimeseriesType
         (TimeseriesType.INTERBEAT_INTERVALS, "INTERBEAT_INTERVALS"),
     ],
 )
-def test_timeseries_path(mtype: TimeseriesType, segment: str) -> None:
+def test_timeseries_path(timeseries_type: TimeseriesType, segment: str) -> None:
     assert (
-        timeline.timeseries("uid_1", mtype) == f"v1/timeline/timeseries/uid_1/{segment}"
+        timeline.timeseries("uid_1", timeseries_type)
+        == f"v1/timeline/timeseries/uid_1/{segment}"
     )
 
 

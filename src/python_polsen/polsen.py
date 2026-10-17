@@ -21,7 +21,7 @@ from yarl import URL
 from python_polsen.types import FeelingType, OverviewMetric, TimeseriesType
 
 from .api import v1
-from .const import API_URL
+from .const import API_HOST
 from .exceptions import RateLimitError, error_for_status
 from .utils import retry_on_rate_limit
 
@@ -36,7 +36,7 @@ class PolsenClient:
     Attributes:
         api_key: API key sent in the ``X-API-KEY`` header.
         session: Optional pre-existing ``aiohttp`` session to reuse.
-        base_url: Host of the API; defaults to :data:`~python_polsen.const.API_URL`.
+        host: Host of the API; defaults to :data:`~python_polsen.const.API_HOST`.
         api: Route-builder namespace, defaulting to :mod:`python_polsen.api.v1`.
         _close_session: Whether this client created (and must close) the session.
         _max_retries: Class-level maximum retries after a rate-limit response.
@@ -44,7 +44,7 @@ class PolsenClient:
 
     api_key: str = field(repr=False)
     session: ClientSession | None = None
-    base_url: str = field(default=API_URL)
+    host: str = field(default=API_HOST)
     api: Any = field(default=v1, repr=False)
     _close_session: bool = False
     _max_retries: ClassVar[int] = 3
@@ -52,7 +52,7 @@ class PolsenClient:
 
     @retry_on_rate_limit(_max_retries)
     async def _request(
-        self, uri: str, *, headers: dict[str, str] | None = None, **kwargs
+        self, path: str, *, headers: dict[str, str] | None = None, **kwargs
     ) -> dict[str, Any]:
         """Perform an authenticated GET request and decode the JSON response.
 
@@ -60,7 +60,7 @@ class PolsenClient:
         error propagates.
 
         Args:
-            uri: Path to request, relative to ``base_url``.
+            path: Path to request, relative to ``host``.
             headers: Optional headers merged over the default API-key header.
             **kwargs: Forwarded to the underlying ``aiohttp`` request.
 
@@ -76,9 +76,9 @@ class PolsenClient:
         """
         url = URL.build(
             scheme="https",
-            host=self.base_url,
+            host=self.host,
             port=443,
-        ).joinpath(uri)
+        ).joinpath(path)
 
         _headers = {
             "X-API-KEY": f"{self.api_key}",

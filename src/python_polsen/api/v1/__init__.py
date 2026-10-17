@@ -42,27 +42,27 @@ def keys() -> str:
     return "v1/keys/users"
 
 
-def overview(user_id: str, stype: OverviewMetric) -> str:
+def overview(user_id: str, overview_metric: OverviewMetric) -> str:
     """Build the path for ``GET /v1/overview/{user_id}/{stype}``.
 
     Args:
         user_id: Identifier of the user (``uid_...``).
-        stype: Overview metric to retrieve.
+        overview_metric: Overview metric to retrieve.
 
     Returns:
         The relative request path.
     """
-    return f"v1/overview/{user_id}/{stype}"
+    return f"v1/overview/{user_id}/{overview_metric}"
 
 
-def feelings(user_id: str, ftype: FeelingType) -> str:
+def feelings(user_id: str, feeling_type: FeelingType) -> str:
     """Build the path for ``GET /v1/feelings/{user_id}/{ftype}``.
 
     Args:
         user_id: Identifier of the user (``uid_...``).
-        ftype: Feelings category (``DAY`` or ``SLEEP``).
+        feeling_type: Feelings category (``DAY`` or ``SLEEP``).
 
     Returns:
         The relative request path.
     """
-    return f"v1/feelings/{user_id}/{ftype}"
+    return f"v1/feelings/{user_id}/{feeling_type}"

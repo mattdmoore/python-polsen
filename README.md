@@ -92,7 +92,7 @@ page = await client.get_sleep(
     params={"start_date": "2026-10-01", "end_date": "2026-10-07"},
 )
 
-while page["next_cursor"]:
+while page.get("next_cursor"):
     page = await client.get_sleep(
         user_id,
         params={

@@ -1,13 +1,13 @@
 """Route builders for the ``v1`` timeline endpoints.
 
-Covers high-frequency time-series paths plus the event paths re-exported from
+Covers high-frequency time-series paths plus the event paths in
 :mod:`python_polsen.api.v1.timeline.events`.
 """
 
 from __future__ import annotations
 
 from ....types import TimeseriesType
-from .events import *
+from . import events
 
 __all__ = [
     "events",

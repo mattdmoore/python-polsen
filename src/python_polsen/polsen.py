@@ -17,8 +17,7 @@ import certifi
 from aiohttp import ClientSession, ContentTypeError, TCPConnector
 from yarl import URL
 
-from python_polsen import FeelingType
-from python_polsen.types import OverviewMetric, TimeseriesType
+from python_polsen.types import FeelingType, OverviewMetric, TimeseriesType
 
 from .api import v1
 from .const import API_URL

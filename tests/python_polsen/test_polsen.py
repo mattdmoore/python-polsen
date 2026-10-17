@@ -8,7 +8,7 @@ from typing import Any
 import pytest
 from fakes import FakeResponse, FakeSession
 
-from python_polsen import FeelingType, PolsenClient
+from python_polsen import PolsenClient
 from python_polsen.api import v1
 from python_polsen.exceptions import (
     APIError,
@@ -17,7 +17,7 @@ from python_polsen.exceptions import (
     RateLimitError,
     ValidationError,
 )
-from python_polsen.types import OverviewMetric, TimeseriesType
+from python_polsen.types import FeelingType, OverviewMetric, TimeseriesType
 
 PROBLEM = {"title": "Problem", "detail": "Something went wrong"}
 UID = "uid_1"

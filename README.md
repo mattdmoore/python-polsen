@@ -1,6 +1,6 @@
 # python-polsen
 
-An asynchronous Python client for the [Polsen Health API](https://api.polsen.health)
+An asynchronous Python client for the [Polsen Health API](https://docs.research-api.nowatch.com/)
 (v1), the service exposing physiological and contextual data collected by Polsen
 devices and processed by the Polsen App for scientific and research use.
 

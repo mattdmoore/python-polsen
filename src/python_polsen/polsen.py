@@ -1,15 +1,22 @@
 from __future__ import annotations
 
-import asyncio
 from dataclasses import dataclass, field
+from http import HTTPStatus
 from typing import Any, Self
 
-from aiohttp import ClientSession
+from aiohttp import ClientSession, ContentTypeError
 from aiohttp.hdrs import METH_GET
 from yarl import URL
 
 from .const import API_URL
-from .exceptions import PolsenConnectionError
+from .exceptions import (
+    APIError,
+    AuthenticationError,
+    NotFoundError,
+    RateLimitError,
+    ValidationError,
+)
+from .utils import retry_on_rate_limit
 
 
 @dataclass
@@ -17,9 +24,10 @@ class PolsenClient:
     api_key: str = field(repr=False)
     session: ClientSession | None = None
     base_url: str = field(default=API_URL)
-    request_timeout: int = field(default=1)
     _close_session: bool = False
+    _max_retries: int = 3
 
+    @retry_on_rate_limit
     async def _request(
         self,
         uri: str,
@@ -39,22 +47,41 @@ class PolsenClient:
         if headers:
             _headers.update(headers)
 
+        session = await self._get_session()
+
+        async with session.request(
+            METH_GET,
+            url,
+            headers=_headers,
+        ) as response:
+            try:
+                body = await response.json()
+            except ContentTypeError:
+                body = {}
+
+            if 200 <= response.status < 300:
+                return body or {}
+
+            match response.status:
+                case HTTPStatus.UNAUTHORIZED | HTTPStatus.FORBIDDEN:
+                    raise AuthenticationError(body, status_code=response.status)
+                case HTTPStatus.NOT_FOUND:
+                    raise NotFoundError(body, status_code=response.status)
+                case HTTPStatus.UNPROCESSABLE_ENTITY:
+                    raise ValidationError(body, status_code=response.status)
+                case HTTPStatus.TOO_MANY_REQUESTS:
+                    retry_after = int(response.headers.get("Retry-After", 2))
+                    raise RateLimitError(
+                        body, status_code=response.status, retry_after=retry_after
+                    )
+                case _:
+                    raise APIError(body, status_code=response.status)
+
+    async def _get_session(self) -> ClientSession:
         if self.session is None:
             self.session = ClientSession()
             self._close_session = True
-
-        try:
-            async with asyncio.timeout(self.request_timeout):
-                response = await self.session.request(
-                    METH_GET,
-                    url,
-                    headers=_headers,
-                )
-        except TimeoutError as exception:
-            msg = "Timeout occurred while connecting to Polsen"
-            raise PolsenConnectionError(msg) from exception
-
-        return await response.json()
+        return self.session
 
     async def close(self) -> None:
         if self.session and self._close_session:

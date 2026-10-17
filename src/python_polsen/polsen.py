@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import ssl
 from dataclasses import dataclass, field
 from http import HTTPStatus
 from typing import Any, Self
 
-from aiohttp import ClientSession, ContentTypeError
+import certifi
+from aiohttp import ClientSession, ContentTypeError, TCPConnector
 from aiohttp.hdrs import METH_GET
 from yarl import URL
 
@@ -79,7 +81,9 @@ class PolsenClient:
 
     async def _get_session(self) -> ClientSession:
         if self.session is None:
-            self.session = ClientSession()
+            ssl_context = ssl.create_default_context(cafile=certifi.where())
+            connector = TCPConnector(ssl=ssl_context)
+            self.session = ClientSession(connector=connector)
             self._close_session = True
         return self.session
 

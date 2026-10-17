@@ -3,6 +3,19 @@
 _BASE = "v1/timeline/events"
 
 
+def _path(segment: str, user_id: str) -> str:
+    """Build the path for ``GET /v1/timeline/events/{segment}/{user_id}``.
+
+    Args:
+        segment: Event segment (e.g. ``sleep``).
+        user_id: Identifier of the user (``uid_...``).
+
+    Returns:
+        The relative request path.
+    """
+    return f"{_BASE}/{segment}/{user_id}"
+
+
 def sleep(user_id: str) -> str:
     """Build the path for ``GET /v1/timeline/events/sleep/{user_id}``.
 
@@ -12,7 +25,7 @@ def sleep(user_id: str) -> str:
     Returns:
         The relative request path.
     """
-    return f"{_BASE}/sleep/{user_id}"
+    return _path("sleep", user_id)
 
 
 def checkins(user_id: str) -> str:
@@ -24,7 +37,7 @@ def checkins(user_id: str) -> str:
     Returns:
         The relative request path.
     """
-    return f"{_BASE}/checkins/{user_id}"
+    return _path("checkins", user_id)
 
 
 def activities(user_id: str) -> str:
@@ -36,7 +49,7 @@ def activities(user_id: str) -> str:
     Returns:
         The relative request path.
     """
-    return f"{_BASE}/activities/{user_id}"
+    return _path("activities", user_id)
 
 
 def timezones(user_id: str) -> str:
@@ -48,7 +61,7 @@ def timezones(user_id: str) -> str:
     Returns:
         The relative request path.
     """
-    return f"{_BASE}/timezones/{user_id}"
+    return _path("timezones", user_id)
 
 
 def crown_presses(user_id: str) -> str:
@@ -60,4 +73,4 @@ def crown_presses(user_id: str) -> str:
     Returns:
         The relative request path.
     """
-    return f"{_BASE}/crown_presses/{user_id}"
+    return _path("crown_presses", user_id)

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import ssl
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from http import HTTPMethod, HTTPStatus
 from typing import Any, Self
@@ -134,6 +135,22 @@ class PolsenClient:
                 self._close_session = True
         return self.session
 
+    async def _get_event_page(
+        self, builder: Callable[[str], str], user_id: str, **kwargs
+    ) -> Any:
+        """Fetch a paginated timeline event page for a user.
+
+        Args:
+            builder: Route builder for the event segment (e.g. ``events.sleep``).
+            user_id: Identifier of the user (``uid_...``).
+            **kwargs: Forwarded to :meth:`_request`; typically ``params`` with
+                ``start_date``, ``end_date``, ``days`` and ``cursor``.
+
+        Returns:
+            The decoded ``Page[...]`` envelope with events and ``next_cursor``.
+        """
+        return await self._request(builder(user_id), **kwargs)
+
     async def get_user_ids(self) -> list[str]:
         """List the users accessible with the configured API key.
 
@@ -192,7 +209,9 @@ class PolsenClient:
         Returns:
             A ``Page[Sleep]`` envelope with sleep events and ``next_cursor``.
         """
-        return await self._request(self.api.timeline.events.sleep(user_id), **kwargs)
+        return await self._get_event_page(
+            self.api.timeline.events.sleep, user_id, **kwargs
+        )
 
     async def get_activities(self, user_id: str, **kwargs) -> Any:
         """Fetch paginated activity events for a user.
@@ -208,8 +227,8 @@ class PolsenClient:
             A ``Page[ActivityModel]`` envelope with activity events and
             ``next_cursor``.
         """
-        return await self._request(
-            self.api.timeline.events.activities(user_id), **kwargs
+        return await self._get_event_page(
+            self.api.timeline.events.activities, user_id, **kwargs
         )
 
     async def get_checkins(self, user_id: str, **kwargs) -> Any:
@@ -226,7 +245,9 @@ class PolsenClient:
             A ``Page[CheckinModel]`` envelope with check-in events and
             ``next_cursor``.
         """
-        return await self._request(self.api.timeline.events.checkins(user_id), **kwargs)
+        return await self._get_event_page(
+            self.api.timeline.events.checkins, user_id, **kwargs
+        )
 
     async def get_timezone(self, user_id: str, **kwargs) -> Any:
         """Fetch paginated timezone-change events for a user.
@@ -242,8 +263,8 @@ class PolsenClient:
             A ``Page[TimezoneResponse]`` envelope with timezone events and
             ``next_cursor``.
         """
-        return await self._request(
-            self.api.timeline.events.timezones(user_id), **kwargs
+        return await self._get_event_page(
+            self.api.timeline.events.timezones, user_id, **kwargs
         )
 
     async def get_crown_presses(self, user_id: str, **kwargs) -> Any:
@@ -260,8 +281,8 @@ class PolsenClient:
             A ``Page[CrownPressResponse]`` envelope with crown-press events and
             ``next_cursor``.
         """
-        return await self._request(
-            self.api.timeline.events.crown_presses(user_id), **kwargs
+        return await self._get_event_page(
+            self.api.timeline.events.crown_presses, user_id, **kwargs
         )
 
     async def get_overview(

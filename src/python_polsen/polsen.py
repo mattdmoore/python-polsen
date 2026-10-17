@@ -243,7 +243,9 @@ class PolsenClient:
             A ``Page[TimezoneResponse]`` envelope with timezone events and
             ``next_cursor``.
         """
-        return await self._request(self.api.timeline.events.timezone(user_id), **kwargs)
+        return await self._request(
+            self.api.timeline.events.timezones(user_id), **kwargs
+        )
 
     async def get_crown_presses(self, user_id: str, **kwargs) -> Any:
         """Fetch paginated crown-press events for a user.

@@ -35,8 +35,10 @@ class PolsenError(Exception):
 
         self.status_code = status_code
 
-        if self.title is not None and self.detail is not None:
-            message = f"{self.title}: {self.detail}"
+        title = getattr(self, "title", None)
+        detail = getattr(self, "detail", None)
+        if title is not None and detail is not None:
+            message = f"{title}: {detail}"
         else:
             message = f"Unknown Polsen API error: {body}"
 

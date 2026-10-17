@@ -20,3 +20,9 @@ repos:
           - --extend-select
           - D
       - id: ruff-format
+
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.13.1
+    hooks:
+      - id: uv-lock
+      - id: uv-export

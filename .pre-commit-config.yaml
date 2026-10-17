@@ -17,4 +17,6 @@ repos:
       - id: ruff-check
         args:
           - --fix
+          - --extend-select
+          - D
       - id: ruff-format

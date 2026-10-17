@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import ssl
 from dataclasses import dataclass, field
 from http import HTTPStatus
@@ -28,6 +29,7 @@ class PolsenClient:
     base_url: str = field(default=API_URL)
     _close_session: bool = False
     _max_retries: int = 3
+    _lock: asyncio.Lock = field(default_factory=asyncio.Lock, repr=False, init=False)
 
     @retry_on_rate_limit
     async def _request(
@@ -81,10 +83,11 @@ class PolsenClient:
 
     async def _get_session(self) -> ClientSession:
         if self.session is None:
-            ssl_context = ssl.create_default_context(cafile=certifi.where())
-            connector = TCPConnector(ssl=ssl_context)
-            self.session = ClientSession(connector=connector)
-            self._close_session = True
+            async with self._lock:
+                ssl_context = ssl.create_default_context(cafile=certifi.where())
+                connector = TCPConnector(ssl=ssl_context)
+                self.session = ClientSession(connector=connector)
+                self._close_session = True
         return self.session
 
     async def close(self) -> None:

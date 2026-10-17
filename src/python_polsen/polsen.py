@@ -11,6 +11,7 @@ from aiohttp import ClientSession, ContentTypeError, TCPConnector
 from aiohttp.hdrs import METH_GET
 from yarl import URL
 
+from .api import v1
 from .const import API_URL
 from .exceptions import (
     APIError,
@@ -27,6 +28,7 @@ class PolsenClient:
     api_key: str = field(repr=False)
     session: ClientSession | None = None
     base_url: str = field(default=API_URL)
+    api: Any = field(default=v1, repr=False)
     _close_session: bool = False
     _max_retries: int = 3
     _lock: asyncio.Lock = field(default_factory=asyncio.Lock, repr=False, init=False)

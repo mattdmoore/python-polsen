@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from importlib.metadata import PackageNotFoundError, version
+
 from .exceptions import (
     APIError,
     AuthenticationError,
@@ -13,8 +15,11 @@ from .exceptions import (
 from .polsen import PolsenClient
 from .types import FeelingType, OverviewMetric, TimeseriesType
 
-__version__ = "0.1.0"
-"""Version of the installed ``python-polsen`` distribution."""
+#: Version of the installed ``python-polsen`` distribution.
+try:
+    __version__ = version("python-polsen")
+except PackageNotFoundError:
+    __version__ = "0.0.0"
 
 __all__ = [
     "APIError",

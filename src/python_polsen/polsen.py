@@ -26,6 +26,21 @@ from .exceptions import RateLimitError, error_for_status
 from .utils import retry_on_rate_limit
 
 
+def _query_params(
+    start_date: str,
+    end_date: str,
+    days: int | None = None,
+    cursor: str | None = None,
+) -> dict[str, str | int]:
+    """Build the ``start_date``/``end_date``/``days``/``cursor`` query params."""
+    params: dict[str, str | int] = {"start_date": start_date, "end_date": end_date}
+    if days is not None:
+        params["days"] = days
+    if cursor is not None:
+        params["cursor"] = cursor
+    return params
+
+
 @dataclass
 class PolsenClient:
     """Async client for the Polsen Health API.
@@ -166,7 +181,14 @@ class PolsenClient:
         return await self._request(self.api.user(user_id))
 
     async def get_timeseries(
-        self, user_id: str, timeseries_type: TimeseriesType, **kwargs
+        self,
+        user_id: str,
+        timeseries_type: TimeseriesType,
+        *,
+        start_date: str,
+        end_date: str,
+        days: int | None = None,
+        cursor: str | None = None,
     ) -> Any:
         """Fetch high-frequency time-series data for a user.
 
@@ -175,108 +197,176 @@ class PolsenClient:
         Args:
             user_id: Identifier of the user (``uid_...``).
             timeseries_type: Measurement to fetch (e.g. ``HEART_RATE``).
-            **kwargs: Forwarded to :meth:`_request`; typically ``params`` with
-                ``start_date``, ``end_date``, ``days`` and ``cursor``.
+            start_date: First date to include (ISO 8601 ``YYYY-MM-DD``).
+            end_date: Last date to include (ISO 8601 ``YYYY-MM-DD``).
+            days: Days per page (default 7, max 30).
+            cursor: Opaque cursor from a previous page.
 
         Returns:
             The columnar ``MeasurementJSONPage`` envelope (time-stamped series
             plus ``next_cursor``).
         """
         return await self._request(
-            self.api.timeline.timeseries(user_id, timeseries_type), **kwargs
+            self.api.timeline.timeseries(user_id, timeseries_type),
+            params=_query_params(start_date, end_date, days, cursor),
         )
 
-    async def get_sleep(self, user_id: str, **kwargs) -> Any:
+    async def get_sleep(
+        self,
+        user_id: str,
+        *,
+        start_date: str,
+        end_date: str,
+        days: int | None = None,
+        cursor: str | None = None,
+    ) -> Any:
         """Fetch paginated sleep events for a user.
 
         Calls ``GET /v1/timeline/events/sleep/{user_id}``.
 
         Args:
             user_id: Identifier of the user (``uid_...``).
-            **kwargs: Forwarded to :meth:`_request`; typically ``params`` with
-                ``start_date``, ``end_date``, ``days`` and ``cursor``.
+            start_date: First date to include (ISO 8601 ``YYYY-MM-DD``).
+            end_date: Last date to include (ISO 8601 ``YYYY-MM-DD``).
+            days: Days per page (default 7, max 30).
+            cursor: Opaque cursor from a previous page.
 
         Returns:
             A ``Page[Sleep]`` envelope with sleep events and ``next_cursor``.
         """
         return await self._get_event_page(
-            self.api.timeline.events.sleep, user_id, **kwargs
+            self.api.timeline.events.sleep,
+            user_id,
+            params=_query_params(start_date, end_date, days, cursor),
         )
 
-    async def get_activities(self, user_id: str, **kwargs) -> Any:
+    async def get_activities(
+        self,
+        user_id: str,
+        *,
+        start_date: str,
+        end_date: str,
+        days: int | None = None,
+        cursor: str | None = None,
+    ) -> Any:
         """Fetch paginated activity events for a user.
 
         Calls ``GET /v1/timeline/events/activities/{user_id}``.
 
         Args:
             user_id: Identifier of the user (``uid_...``).
-            **kwargs: Forwarded to :meth:`_request`; typically ``params`` with
-                ``start_date``, ``end_date``, ``days`` and ``cursor``.
+            start_date: First date to include (ISO 8601 ``YYYY-MM-DD``).
+            end_date: Last date to include (ISO 8601 ``YYYY-MM-DD``).
+            days: Days per page (default 7, max 30).
+            cursor: Opaque cursor from a previous page.
 
         Returns:
             A ``Page[ActivityModel]`` envelope with activity events and
             ``next_cursor``.
         """
         return await self._get_event_page(
-            self.api.timeline.events.activities, user_id, **kwargs
+            self.api.timeline.events.activities,
+            user_id,
+            params=_query_params(start_date, end_date, days, cursor),
         )
 
-    async def get_checkins(self, user_id: str, **kwargs) -> Any:
+    async def get_checkins(
+        self,
+        user_id: str,
+        *,
+        start_date: str,
+        end_date: str,
+        days: int | None = None,
+        cursor: str | None = None,
+    ) -> Any:
         """Fetch paginated check-in events for a user.
 
         Calls ``GET /v1/timeline/events/checkins/{user_id}``.
 
         Args:
             user_id: Identifier of the user (``uid_...``).
-            **kwargs: Forwarded to :meth:`_request`; typically ``params`` with
-                ``start_date``, ``end_date``, ``days`` and ``cursor``.
+            start_date: First date to include (ISO 8601 ``YYYY-MM-DD``).
+            end_date: Last date to include (ISO 8601 ``YYYY-MM-DD``).
+            days: Days per page (default 7, max 30).
+            cursor: Opaque cursor from a previous page.
 
         Returns:
             A ``Page[CheckinModel]`` envelope with check-in events and
             ``next_cursor``.
         """
         return await self._get_event_page(
-            self.api.timeline.events.checkins, user_id, **kwargs
+            self.api.timeline.events.checkins,
+            user_id,
+            params=_query_params(start_date, end_date, days, cursor),
         )
 
-    async def get_timezone(self, user_id: str, **kwargs) -> Any:
+    async def get_timezone(
+        self,
+        user_id: str,
+        *,
+        start_date: str,
+        end_date: str,
+        days: int | None = None,
+        cursor: str | None = None,
+    ) -> Any:
         """Fetch paginated timezone-change events for a user.
 
         Calls ``GET /v1/timeline/events/timezones/{user_id}``.
 
         Args:
             user_id: Identifier of the user (``uid_...``).
-            **kwargs: Forwarded to :meth:`_request`; typically ``params`` with
-                ``start_date``, ``end_date``, ``days`` and ``cursor``.
+            start_date: First date to include (ISO 8601 ``YYYY-MM-DD``).
+            end_date: Last date to include (ISO 8601 ``YYYY-MM-DD``).
+            days: Days per page (default 7, max 30).
+            cursor: Opaque cursor from a previous page.
 
         Returns:
             A ``Page[TimezoneResponse]`` envelope with timezone events and
             ``next_cursor``.
         """
         return await self._get_event_page(
-            self.api.timeline.events.timezones, user_id, **kwargs
+            self.api.timeline.events.timezones,
+            user_id,
+            params=_query_params(start_date, end_date, days, cursor),
         )
 
-    async def get_crown_presses(self, user_id: str, **kwargs) -> Any:
+    async def get_crown_presses(
+        self,
+        user_id: str,
+        *,
+        start_date: str,
+        end_date: str,
+        days: int | None = None,
+        cursor: str | None = None,
+    ) -> Any:
         """Fetch paginated crown-press events for a user.
 
         Calls ``GET /v1/timeline/events/crown_presses/{user_id}``.
 
         Args:
             user_id: Identifier of the user (``uid_...``).
-            **kwargs: Forwarded to :meth:`_request`; typically ``params`` with
-                ``start_date``, ``end_date``, ``days`` and ``cursor``.
+            start_date: First date to include (ISO 8601 ``YYYY-MM-DD``).
+            end_date: Last date to include (ISO 8601 ``YYYY-MM-DD``).
+            days: Days per page (default 7, max 30).
+            cursor: Opaque cursor from a previous page.
 
         Returns:
             A ``Page[CrownPressResponse]`` envelope with crown-press events and
             ``next_cursor``.
         """
         return await self._get_event_page(
-            self.api.timeline.events.crown_presses, user_id, **kwargs
+            self.api.timeline.events.crown_presses,
+            user_id,
+            params=_query_params(start_date, end_date, days, cursor),
         )
 
     async def get_overview(
-        self, user_id: str, overview_metric: OverviewMetric, **kwargs
+        self,
+        user_id: str,
+        overview_metric: OverviewMetric,
+        *,
+        start_date: str,
+        end_date: str,
     ) -> Any:
         """Fetch daily/typical statistics for one overview metric.
 
@@ -285,18 +375,26 @@ class PolsenClient:
         Args:
             user_id: Identifier of the user (``uid_...``).
             overview_metric: Metric to summarise (e.g. ``HRV``, ``RHR``).
-            **kwargs: Forwarded to :meth:`_request`; typically ``params`` with
-                ``start_date`` and ``end_date``.
+            start_date: First date to include (ISO 8601 ``YYYY-MM-DD``).
+            end_date: Last date to include (ISO 8601 ``YYYY-MM-DD``).
 
         Returns:
             A list of per-day metric objects for the requested range.
         """
         return await self._request(
-            self.api.overview(user_id, overview_metric), **kwargs
+            self.api.overview(user_id, overview_metric),
+            params=_query_params(start_date, end_date),
         )
 
     async def get_feelings(
-        self, user_id: str, feeling_type: FeelingType, **kwargs
+        self,
+        user_id: str,
+        feeling_type: FeelingType,
+        *,
+        start_date: str,
+        end_date: str,
+        days: int | None = None,
+        cursor: str | None = None,
     ) -> Any:
         """Fetch self-reported feelings for a user.
 
@@ -306,14 +404,19 @@ class PolsenClient:
             user_id: Identifier of the user (``uid_...``).
             feeling_type: ``DAY`` for waking-day feelings or ``SLEEP`` for the
                 preceding night.
-            **kwargs: Forwarded to :meth:`_request`; typically ``params`` with
-                ``start_date``, ``end_date``, ``days`` and ``cursor``.
+            start_date: First date to include (ISO 8601 ``YYYY-MM-DD``).
+            end_date: Last date to include (ISO 8601 ``YYYY-MM-DD``).
+            days: Days per page (default 7, max 30).
+            cursor: Opaque cursor from a previous page.
 
         Returns:
             A ``Page[FeelingsModel]`` envelope with dated feeling values and
             ``next_cursor``.
         """
-        return await self._request(self.api.feelings(user_id, feeling_type), **kwargs)
+        return await self._request(
+            self.api.feelings(user_id, feeling_type),
+            params=_query_params(start_date, end_date, days, cursor),
+        )
 
     async def close(self) -> None:
         """Close the underlying session if this client created it."""

@@ -43,7 +43,8 @@ async def main() -> None:
         heart_rate = await client.get_timeseries(
             user_ids[0],
             TimeseriesType.HEART_RATE,
-            params={"start_date": "2026-10-17", "end_date": "2026-10-17"},
+            start_date="2026-10-17",
+            end_date="2026-10-17",
         )
         print(user, heart_rate)
 
@@ -61,14 +62,14 @@ argument and call `await client.close()` manually.
 | --- | --- | --- |
 | `get_user_ids()` | `GET /v1/keys/users` | User ids (`uid_...`) reachable by the key |
 | `get_user(user_id)` | `GET /v1/user/{user_id}` | User profile |
-| `get_timeseries(user_id, timeseries_type, **kw)` | `GET /v1/timeline/timeseries/{user_id}/{mtype}` | Columnar `MeasurementJSONPage` |
-| `get_sleep(user_id, **kw)` | `GET /v1/timeline/events/sleep/{user_id}` | `Page[Sleep]` |
-| `get_activities(user_id, **kw)` | `GET /v1/timeline/events/activities/{user_id}` | `Page[ActivityModel]` |
-| `get_checkins(user_id, **kw)` | `GET /v1/timeline/events/checkins/{user_id}` | `Page[CheckinModel]` |
-| `get_timezone(user_id, **kw)` | `GET /v1/timeline/events/timezones/{user_id}` | `Page[TimezoneResponse]` |
-| `get_crown_presses(user_id, **kw)` | `GET /v1/timeline/events/crown_presses/{user_id}` | `Page[CrownPressResponse]` |
-| `get_overview(user_id, overview_metric, **kw)` | `GET /v1/overview/{user_id}/{stype}` | List of per-day metrics |
-| `get_feelings(user_id, feeling_type, **kw)` | `GET /v1/feelings/{user_id}/{ftype}` | `Page[FeelingsModel]` |
+| `get_timeseries(user_id, timeseries_type, *, start_date, end_date, days=None, cursor=None)` | `GET /v1/timeline/timeseries/{user_id}/{mtype}` | Columnar `MeasurementJSONPage` |
+| `get_sleep(user_id, *, start_date, end_date, days=None, cursor=None)` | `GET /v1/timeline/events/sleep/{user_id}` | `Page[Sleep]` |
+| `get_activities(user_id, *, start_date, end_date, days=None, cursor=None)` | `GET /v1/timeline/events/activities/{user_id}` | `Page[ActivityModel]` |
+| `get_checkins(user_id, *, start_date, end_date, days=None, cursor=None)` | `GET /v1/timeline/events/checkins/{user_id}` | `Page[CheckinModel]` |
+| `get_timezone(user_id, *, start_date, end_date, days=None, cursor=None)` | `GET /v1/timeline/events/timezones/{user_id}` | `Page[TimezoneResponse]` |
+| `get_crown_presses(user_id, *, start_date, end_date, days=None, cursor=None)` | `GET /v1/timeline/events/crown_presses/{user_id}` | `Page[CrownPressResponse]` |
+| `get_overview(user_id, overview_metric, *, start_date, end_date)` | `GET /v1/overview/{user_id}/{stype}` | List of per-day metrics |
+| `get_feelings(user_id, feeling_type, *, start_date, end_date, days=None, cursor=None)` | `GET /v1/feelings/{user_id}/{ftype}` | `Page[FeelingsModel]` |
 
 ### Enums
 
@@ -84,22 +85,22 @@ members in `python_polsen.types`:
 ### Pagination
 
 Event and feelings endpoints return a `{ "data": [...], "next_cursor": ... }`
-envelope. Pass dates via the request `params`:
+envelope. The `start_date` and `end_date` range is required; pass it as keyword
+arguments:
 
 ```python
 page = await client.get_sleep(
     user_id,
-    params={"start_date": "2026-10-01", "end_date": "2026-10-07"},
+    start_date="2026-10-01",
+    end_date="2026-10-07",
 )
 
 while page.get("next_cursor"):
     page = await client.get_sleep(
         user_id,
-        params={
-            "start_date": "2026-10-01",
-            "end_date": "2026-10-07",
-            "cursor": page["next_cursor"],
-        },
+        start_date="2026-10-01",
+        end_date="2026-10-07",
+        cursor=page["next_cursor"],
     )
 ```
 

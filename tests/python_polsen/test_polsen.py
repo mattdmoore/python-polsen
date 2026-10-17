@@ -21,6 +21,7 @@ from python_polsen.types import FeelingType, OverviewMetric, TimeseriesType
 
 PROBLEM = {"title": "Problem", "detail": "Something went wrong"}
 UID = "uid_1"
+DATES = {"start_date": "2026-10-01", "end_date": "2026-10-07"}
 
 
 def build_session(*responses: FakeResponse) -> FakeSession:
@@ -79,49 +80,85 @@ async def test_null_json_body_decodes_to_empty_dict() -> None:
 
 
 @pytest.mark.parametrize(
-    ("method", "args", "path"),
+    ("method", "args", "kwargs", "path"),
     [
-        ("get_user_ids", (), v1.keys()),
-        ("get_user", (UID,), v1.user(UID)),
+        ("get_user_ids", (), {}, v1.keys()),
+        ("get_user", (UID,), {}, v1.user(UID)),
         (
             "get_timeseries",
             (UID, TimeseriesType.HEART_RATE),
+            DATES,
             v1.timeline.timeseries(UID, TimeseriesType.HEART_RATE),
         ),
-        ("get_sleep", (UID,), v1.timeline.events.sleep(UID)),
-        ("get_activities", (UID,), v1.timeline.events.activities(UID)),
-        ("get_checkins", (UID,), v1.timeline.events.checkins(UID)),
-        ("get_timezone", (UID,), v1.timeline.events.timezones(UID)),
-        ("get_crown_presses", (UID,), v1.timeline.events.crown_presses(UID)),
+        ("get_sleep", (UID,), DATES, v1.timeline.events.sleep(UID)),
+        ("get_activities", (UID,), DATES, v1.timeline.events.activities(UID)),
+        ("get_checkins", (UID,), DATES, v1.timeline.events.checkins(UID)),
+        ("get_timezone", (UID,), DATES, v1.timeline.events.timezones(UID)),
+        ("get_crown_presses", (UID,), DATES, v1.timeline.events.crown_presses(UID)),
         (
             "get_overview",
             (UID, OverviewMetric.HRV),
+            DATES,
             v1.overview(UID, OverviewMetric.HRV),
         ),
         (
             "get_feelings",
             (UID, FeelingType.DAY),
+            DATES,
             v1.feelings(UID, FeelingType.DAY),
         ),
     ],
 )
 async def test_endpoint_targets_expected_path(
-    method: str, args: tuple[Any, ...], path: str
+    method: str,
+    args: tuple[Any, ...],
+    kwargs: dict[str, Any],
+    path: str,
 ) -> None:
     session = build_session(FakeResponse(body={}))
 
-    await getattr(build_client(session), method)(*args)
+    await getattr(build_client(session), method)(*args, **kwargs)
 
     assert str(session.requests[0].url) == f"https://api.polsen.health/{path}"
 
 
 async def test_query_parameters_are_forwarded() -> None:
     session = build_session(FakeResponse(body={"data": [], "next_cursor": None}))
-    params = {"start_date": "2026-10-01", "end_date": "2026-10-07", "cursor": "abc"}
 
-    await build_client(session).get_sleep(UID, params=params)
+    await build_client(session).get_sleep(
+        UID,
+        start_date="2026-10-01",
+        end_date="2026-10-07",
+        days=14,
+        cursor="abc",
+    )
 
-    assert session.requests[0].kwargs["params"] == params
+    assert session.requests[0].kwargs["params"] == {
+        "start_date": "2026-10-01",
+        "end_date": "2026-10-07",
+        "days": 14,
+        "cursor": "abc",
+    }
+
+
+async def test_query_parameters_omit_unset_optionals() -> None:
+    session = build_session(FakeResponse(body={"data": [], "next_cursor": None}))
+
+    await build_client(session).get_sleep(
+        UID, start_date="2026-10-01", end_date="2026-10-07"
+    )
+
+    assert session.requests[0].kwargs["params"] == {
+        "start_date": "2026-10-01",
+        "end_date": "2026-10-07",
+    }
+
+
+async def test_required_dates_are_enforced() -> None:
+    session = build_session(FakeResponse(body={}))
+
+    with pytest.raises(TypeError):
+        await build_client(session).get_sleep(UID)
 
 
 async def test_host_can_be_overridden() -> None:

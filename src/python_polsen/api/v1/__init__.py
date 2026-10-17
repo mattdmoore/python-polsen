@@ -4,12 +4,15 @@ from ...types import FeelingType, OverviewMetric
 from . import timeline
 
 __all__ = [
+    "VERSION",
     "feelings",
     "keys",
     "overview",
     "timeline",
     "user",
 ]
+
+VERSION = "v1"
 
 
 def user(user_id: str) -> str:

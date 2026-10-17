@@ -10,21 +10,25 @@ from python_polsen.exceptions import RateLimitError
 from python_polsen.utils import retry_on_rate_limit
 
 
-class Service:
-    """A minimal decorated method owner recording its invocations."""
+def build_service(max_retries: int = 3) -> type:
+    """Build a service whose ``call`` method retries up to ``max_retries``."""
 
-    def __init__(self, results: list[Any], max_retries: int = 3) -> None:
-        self._max_retries = max_retries
-        self._results = list(results)
-        self.calls = 0
+    class Service:
+        """A decorated method owner recording its invocations."""
 
-    @retry_on_rate_limit
-    async def call(self) -> Any:
-        self.calls += 1
-        result = self._results.pop(0)
-        if isinstance(result, Exception):
-            raise result
-        return result
+        def __init__(self, results: list[Any]) -> None:
+            self._results = list(results)
+            self.calls = 0
+
+        @retry_on_rate_limit(max_retries)
+        async def call(self) -> Any:
+            self.calls += 1
+            result = self._results.pop(0)
+            if isinstance(result, Exception):
+                raise result
+            return result
+
+    return Service
 
 
 def rate_limit(retry_after: int = 1) -> RateLimitError:
@@ -42,7 +46,7 @@ async def test_returns_result_without_retrying(
         slept.append(seconds)
 
     monkeypatch.setattr("python_polsen.utils.asyncio.sleep", record)
-    service = Service(["ok"])
+    service = build_service()(["ok"])
 
     assert await service.call() == "ok"
     assert service.calls == 1
@@ -58,7 +62,7 @@ async def test_retries_after_rate_limit_then_succeeds(
         slept.append(seconds)
 
     monkeypatch.setattr("python_polsen.utils.asyncio.sleep", record)
-    service = Service([rate_limit(retry_after=3), "ok"])
+    service = build_service()([rate_limit(retry_after=3), "ok"])
 
     assert await service.call() == "ok"
     assert service.calls == 2
@@ -66,7 +70,7 @@ async def test_retries_after_rate_limit_then_succeeds(
 
 
 async def test_reraises_after_exhausting_retries() -> None:
-    service = Service([rate_limit()] * 4, max_retries=2)
+    service = build_service(max_retries=2)([rate_limit()] * 4)
 
     with pytest.raises(RateLimitError):
         await service.call()
@@ -75,4 +79,4 @@ async def test_reraises_after_exhausting_retries() -> None:
 
 
 def test_preserves_wrapped_function_metadata() -> None:
-    assert Service.call.__name__ == "call"
+    assert build_service().call.__name__ == "call"

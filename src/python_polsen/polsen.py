@@ -12,7 +12,7 @@ import ssl
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from http import HTTPMethod, HTTPStatus
-from typing import Any, Self
+from typing import Any, ClassVar, Self
 
 import certifi
 from aiohttp import ClientSession, ContentTypeError, TCPConnector
@@ -45,7 +45,7 @@ class PolsenClient:
         base_url: Host of the API; defaults to :data:`~python_polsen.const.API_URL`.
         api: Route-builder namespace, defaulting to :mod:`python_polsen.api.v1`.
         _close_session: Whether this client created (and must close) the session.
-        _max_retries: Maximum number of retries after a rate-limit response.
+        _max_retries: Class-level maximum retries after a rate-limit response.
     """
 
     api_key: str = field(repr=False)
@@ -53,14 +53,17 @@ class PolsenClient:
     base_url: str = field(default=API_URL)
     api: Any = field(default=v1, repr=False)
     _close_session: bool = False
-    _max_retries: int = 3
+    _max_retries: ClassVar[int] = 3
     _lock: asyncio.Lock = field(default_factory=asyncio.Lock, repr=False, init=False)
 
-    @retry_on_rate_limit
+    @retry_on_rate_limit(_max_retries)
     async def _request(
         self, uri: str, *, headers: dict[str, str] | None = None, **kwargs
     ) -> dict[str, Any]:
         """Perform an authenticated GET request and decode the JSON response.
+
+        Retries rate-limited requests up to ``_max_retries`` times before the
+        error propagates.
 
         Args:
             uri: Path to request, relative to ``base_url``.
